@@ -21,72 +21,88 @@ LIMA = ZoneInfo("America/Lima")
 PAGINA = """<!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MercaRed - Ventas por sucursal</title>
+<title>MercaRed | Consolidado de ventas</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
- body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:0;background:#f4f6f8;color:#1f2937}
- header{background:#0f766e;color:#fff;padding:18px 32px}
- header h1{margin:0;font-size:22px} header p{margin:4px 0 0;opacity:.85;font-size:14px}
- main{max-width:1050px;margin:24px auto;padding:0 16px;display:grid;gap:20px}
- .card{background:#fff;border-radius:12px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
- h2{font-size:17px;margin:0 0 14px}
- .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
- .kpi{background:#f0fdfa;border-radius:10px;padding:14px}
- .kpi span{font-size:13px;color:#475569} .kpi b{display:block;font-size:22px;margin-top:4px;color:#0f766e}
- form{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
- button{background:#0f766e;color:#fff;border:0;border-radius:8px;padding:10px 18px;font-size:14px;cursor:pointer}
- .msg{padding:10px 14px;border-radius:8px;font-size:14px}
- .ok{background:#dcfce7;color:#166534} .err{background:#fee2e2;color:#991b1b}
- table{width:100%;border-collapse:collapse;font-size:14px}
- th,td{text-align:left;padding:8px 6px;border-bottom:1px solid #e5e7eb} th{color:#64748b;font-weight:600}
- .tag{padding:2px 8px;border-radius:999px;font-size:12px}
- .procesado{background:#dcfce7;color:#166534} .rechazado{background:#fee2e2;color:#991b1b}
- .bar{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:14px}
- .bar .name{width:130px} .bar .track{flex:1;background:#e2e8f0;border-radius:6px;height:18px}
- .bar .fill{background:#14b8a6;height:18px;border-radius:6px} .bar .val{width:110px;text-align:right}
- small{color:#64748b}
- @media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
+ body{background:#eef1f5;font-size:.92rem}
+ .navbar{background:#16233d}
+ .navbar-brand b{color:#fff;letter-spacing:.5px} .navbar-brand small{color:#9fb0cc;font-size:.75rem}
+ .titulo{border-bottom:2px solid #16233d}
+ .card-header{background:#f7f8fa;font-weight:600;color:#16233d}
+ .indicador{border-left:4px solid #1f4e8c}
+ .indicador .valor{font-size:1.45rem;font-weight:600;color:#16233d}
+ .progress{height:.9rem} .progress-bar{background:#1f4e8c}
+ .btn-primary{background:#1f4e8c;border-color:#1f4e8c}
+ footer{color:#6c7a91;font-size:.8rem}
 </style></head><body>
-<header><h1>MercaRed Peru S.A.C.</h1>
-<p>Consolidacion automatica de ventas por sucursal &middot; Google Cloud (Cloud Run + Eventarc + Firestore)</p></header>
-<main>
- <section class="card">
-  <h2>Subir archivo de ventas (CSV)</h2>
-  {% if mensaje %}<p class="msg {{ tipo }}">{{ mensaje }}</p>{% endif %}
-  <form method="post" action="{{ url_for('subir') }}" enctype="multipart/form-data">
-   <input type="file" name="archivo" accept=".csv" required>
-   <button type="submit">Subir y procesar</button>
-  </form>
-  <p><small>Formato: fecha,sucursal,producto,cantidad,precio_unitario &middot; fecha AAAA-MM-DD &middot; maximo 5 MB.
-  El procesamiento tarda unos segundos; esta pagina se actualiza sola.</small></p>
- </section>
- <section class="kpis">
-  <div class="kpi"><span>Archivos procesados</span><b>{{ kpi.procesados }}</b></div>
-  <div class="kpi"><span>Archivos rechazados</span><b>{{ kpi.rechazados }}</b></div>
-  <div class="kpi"><span>Ventas registradas</span><b>{{ kpi.ventas }}</b></div>
-  <div class="kpi"><span>Monto total</span><b>S/ {{ "{:,.2f}".format(kpi.monto) }}</b></div>
- </section>
- <section class="card">
-  <h2>Ventas por sucursal</h2>
-  {% for s in sucursales %}
-   <div class="bar"><span class="name">{{ s.nombre }}</span>
-    <div class="track"><div class="fill" style="width:{{ s.pct }}%"></div></div>
-    <span class="val">S/ {{ "{:,.2f}".format(s.monto) }}</span></div>
-  {% else %}<p><small>Aun no hay ventas procesadas.</small></p>{% endfor %}
- </section>
- <section class="card">
-  <h2>Ultimos archivos recibidos</h2>
-  <table><tr><th>Archivo</th><th>Estado</th><th>Detalle</th><th>Procesado (hora Lima)</th></tr>
-  {% for a in archivos %}
-   <tr><td>{{ a.archivo }}</td>
-    <td><span class="tag {{ a.estado }}">{{ a.estado }}</span></td>
-    <td>{% if a.estado == 'procesado' %}{{ a.filas }} filas &middot; S/ {{ "{:,.2f}".format(a.monto_total or 0) }}
-        {% else %}{{ (a.errores or [])[:2]|join('; ') }}{% if (a.total_errores or 0) > 2 %} (+{{ a.total_errores - 2 }} mas){% endif %}{% endif %}</td>
-    <td>{{ a.hora }}</td></tr>
-  {% else %}<tr><td colspan="4"><small>Todavia no se ha recibido ningun archivo.</small></td></tr>{% endfor %}
-  </table>
- </section>
-</main>
-<script>setTimeout(function(){ location.href = location.pathname; }, 15000);</script>
+<nav class="navbar navbar-dark px-4 py-2">
+ <span class="navbar-brand mb-0"><b>MercaRed</b> <small>Sistema de Consolidacion de Ventas</small></span>
+ <span class="text-light small">Area de Operaciones &middot; Sede Central</span>
+</nav>
+<div class="container-lg py-4">
+ <div class="d-flex justify-content-between align-items-end titulo pb-2 mb-4">
+  <div><h5 class="mb-0">Consolidado de ventas por sucursal</h5>
+   <span class="text-muted small">Ultima actualizacion: {{ actualizado }} (hora Lima)</span></div>
+  <a href="/" class="btn btn-outline-secondary btn-sm">Actualizar</a>
+ </div>
+ {% if mensaje %}<div class="alert alert-{{ 'danger' if tipo == 'err' else 'success' }} py-2">{{ mensaje }}</div>{% endif %}
+ <div class="row g-3 mb-4">
+  <div class="col-lg-5">
+   <div class="card h-100"><div class="card-header">Cargar archivo de ventas</div>
+    <div class="card-body">
+     <form method="post" action="{{ url_for('subir') }}" enctype="multipart/form-data">
+      <input class="form-control form-control-sm mb-2" type="file" name="archivo" accept=".csv" required>
+      <button class="btn btn-primary btn-sm" type="submit">Enviar archivo</button>
+     </form>
+     <ul class="small text-muted mt-3 mb-0 ps-3">
+      <li>Columnas: fecha, sucursal, producto, cantidad, precio_unitario</li>
+      <li>Fecha en formato AAAA-MM-DD. Tamano maximo: 5 MB</li>
+      <li>El archivo se procesa automaticamente en pocos segundos</li>
+     </ul>
+    </div></div>
+  </div>
+  <div class="col-lg-7">
+   <div class="row g-3">
+    <div class="col-6"><div class="card indicador"><div class="card-body py-2">
+     <div class="text-muted small">Archivos procesados</div><div class="valor">{{ kpi.procesados }}</div></div></div></div>
+    <div class="col-6"><div class="card indicador" style="border-left-color:#b02a37"><div class="card-body py-2">
+     <div class="text-muted small">Archivos rechazados</div><div class="valor">{{ kpi.rechazados }}</div></div></div></div>
+    <div class="col-6"><div class="card indicador"><div class="card-body py-2">
+     <div class="text-muted small">Lineas de venta registradas</div><div class="valor">{{ "{:,}".format(kpi.ventas) }}</div></div></div></div>
+    <div class="col-6"><div class="card indicador"><div class="card-body py-2">
+     <div class="text-muted small">Monto total vendido</div><div class="valor">S/ {{ "{:,.2f}".format(kpi.monto) }}</div></div></div></div>
+   </div>
+  </div>
+ </div>
+ <div class="card mb-4"><div class="card-header">Ventas por sucursal</div>
+  <div class="card-body p-0">
+   <table class="table table-sm align-middle mb-0">
+    <thead class="table-light"><tr><th class="ps-3">Sucursal</th><th style="width:50%">Participacion</th><th class="text-end pe-3">Monto (S/)</th></tr></thead>
+    <tbody>
+    {% for s in sucursales %}
+     <tr><td class="ps-3">{{ s.nombre }}</td>
+      <td><div class="progress"><div class="progress-bar" style="width:{{ s.pct }}%"></div></div></td>
+      <td class="text-end pe-3">{{ "{:,.2f}".format(s.monto) }}</td></tr>
+    {% else %}<tr><td colspan="3" class="ps-3 text-muted">Aun no hay ventas procesadas.</td></tr>{% endfor %}
+    </tbody></table>
+  </div></div>
+ <div class="card"><div class="card-header">Ultimos archivos recibidos</div>
+  <div class="card-body p-0">
+   <table class="table table-sm table-striped mb-0">
+    <thead class="table-light"><tr><th class="ps-3">Archivo</th><th>Estado</th><th>Detalle</th><th class="pe-3">Fecha y hora</th></tr></thead>
+    <tbody>
+    {% for a in archivos %}
+     <tr><td class="ps-3">{{ a.archivo }}</td>
+      <td>{% if a.estado == 'procesado' %}<span class="badge text-bg-success">Procesado</span>{% else %}<span class="badge text-bg-danger">Rechazado</span>{% endif %}</td>
+      <td>{% if a.estado == 'procesado' %}{{ a.filas }} lineas &middot; S/ {{ "{:,.2f}".format(a.monto_total or 0) }}
+          {% else %}{{ (a.errores or [])[:2]|join('; ') }}{% if (a.total_errores or 0) > 2 %} (+{{ a.total_errores - 2 }} mas){% endif %}{% endif %}</td>
+      <td class="pe-3 text-nowrap">{{ a.hora }}</td></tr>
+    {% else %}<tr><td colspan="4" class="ps-3 text-muted">Todavia no se ha recibido ningun archivo.</td></tr>{% endfor %}
+    </tbody></table>
+  </div></div>
+ <footer class="text-center mt-4">MercaRed Peru S.A.C. &middot; Area de Tecnologia &middot; v1.1</footer>
+</div>
+<script>setTimeout(function(){ location.href = location.pathname; }, 30000);</script>
 </body></html>"""
 
 
@@ -127,8 +143,10 @@ def resumen():
 @app.get("/")
 def inicio():
     archivos, sucursales, kpi = resumen()
+    actualizado = datetime.datetime.now(LIMA).strftime("%d/%m/%Y %H:%M:%S")
     return render_template_string(PAGINA, archivos=archivos, sucursales=sucursales, kpi=kpi,
-                                  mensaje=request.args.get("m"), tipo=request.args.get("t", "ok"))
+                                  actualizado=actualizado, mensaje=request.args.get("m"),
+                                  tipo=request.args.get("t", "ok"))
 
 
 @app.post("/subir")
