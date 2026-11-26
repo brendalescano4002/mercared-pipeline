@@ -1,0 +1,17 @@
+{
+  "displayName": "MercaRed - Muchos archivos rechazados",
+  "combiner": "OR",
+  "conditions": [{
+    "displayName": "Mas de 3 archivos rechazados en 10 minutos",
+    "conditionThreshold": {
+      "filter": "metric.type=\"logging.googleapis.com/user/archivos_rechazados\" AND resource.type=\"cloud_run_revision\"",
+      "aggregations": [{"alignmentPeriod": "600s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM"}],
+      "comparison": "COMPARISON_GT",
+      "thresholdValue": 3,
+      "duration": "0s",
+      "trigger": {"count": 1}
+    }
+  }],
+  "notificationChannels": ["projects/project-df7f91a3-445f-4d8d-a17/notificationChannels/618154432281338063"],
+  "documentation": {"content": "Varias sucursales estan enviando archivos con errores. Revisar el bucket de rechazados.", "mimeType": "text/markdown"}
+}
