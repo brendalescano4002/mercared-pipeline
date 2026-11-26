@@ -4,8 +4,9 @@
 # Ejecutar desde la carpeta mercared-pipeline:
 #   bash scripts/05-monitoreo.sh
 # =============================================================
-P=project-df7f91a3-445f-4d8d-a17
-CORREO=brendalescano4002@gmail.com
+source "$(dirname "$0")/00-variables.sh"
+P=$PROJECT_ID
+CORREO=$CORREO_ALERTAS
 mkdir -p monitoreo
 
 echo ">> 1. Metricas basadas en logs (cuentan archivos procesados y rechazados)"

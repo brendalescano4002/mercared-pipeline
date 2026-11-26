@@ -6,7 +6,8 @@
 # Uso:  bash scripts/06-prueba-carga.sh [cantidad_de_archivos]
 # =============================================================
 CANTIDAD=${1:-150}
-BUCKET=gs://mercared-entrada-df7f91a3
+source "$(dirname "$0")/00-variables.sh"
+BUCKET=gs://$BUCKET_ENTRADA
 CARPETA=pruebas/carga
 
 echo ">> Generando $CANTIDAD archivos en $CARPETA ..."
